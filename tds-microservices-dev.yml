@@ -1,0 +1,135 @@
+version: '3.8'
+services:
+  eureka-server:
+    image: 'plchavez98/tds-microservice-eureka-server:${EUREKA_SERVER_VERSION}'
+    container_name: eureka-serve
+    ports:
+      - 8761:8761
+    restart: always
+    networks:
+      - def-tds-microservices-dev
+  rabbitmq:
+    image: 'rabbitmq:3.8-management-alpine'
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - def-tds-microservices-dev
+  tds-microservice-zipkin-server:
+    image: 'plchavez98/tds-microservice-zipkinserver:${ZIPKIN_SERVER_VERSION}'
+    container_name: tds-microservice-zipkin-server
+    ports:
+      - 9411:9411
+    restart: always
+    networks:
+      - def-tds-microservices-dev
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBIT_ADDRESSES: rabbitmq:5672
+      STORAGE_TYPE: mysql
+      MYSQL_DB: zipkin-dev
+      MYSQL_USER: zipkin-dev
+      MYSQL_PASS: zipkin-dev
+      MYSQL_HOST: mysql8      
+  tds-microservice-products:
+    image: 'plchavez98/tds-microservice-products:${MICRO_PRODUCTS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+    networks:
+      - def-tds-microservices-dev
+  tds-microservice-suppliers:
+    image: 'plchavez98/tds-microservice-suppliers:${MICRO_SUPPLIERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: 'dev'
+      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - def-tds-microservices-dev
+  tds-microservice-sales:
+    image: 'plchavez98/tds-microservice-sales:${MICRO_SALES_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: 'dev'
+      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - def-tds-microservices-dev      
+  tds-microservice-orders:
+    image: 'plchavez98/tds-microservice-orders:${MICRO_ORDERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - def-tds-microservices-dev
+  tds-microservice-users:
+    image: 'plchavez98/tds-microservice-users:${MICRO_USERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+    networks:
+      - def-tds-microservices-dev
+  oauth2-server:
+    image: 'plchavez98/tds-microservice-oauth2-server:${OAUTH_SERVER_VERSION}'
+    container_name: oauth2-serve
+    ports:
+      - 9100:9100
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    networks:
+      - def-tds-microservices-dev
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-users
+  zuul-server:
+    image: 'plchavez98/tds-microservice-zuul-server:${ZUUL_SERVER_VERSION}'
+    container_name: zuul-server
+    ports:
+      - 8090:8090
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    networks:
+      - def-tds-microservices-dev
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+      - tds-microservice-suppliers
+      - tds-microservice-sales
+      - tds-microservice-orders
+      - tds-microservice-users
+      - oauth2-server
+networks:
+  def-tds-microservices-dev:
+    name: tds-microservices-dev
+    external: true
