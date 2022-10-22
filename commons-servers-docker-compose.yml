@@ -1,20 +1,21 @@
 version: '3.8'
 services:
   config-server:
-    image: 'plchavez98/tds-microservice-config-server:latest'
+    image: 'plchavez98/tds-microservice-config-server:${CONFIG_SERVER_IMAGE_TAG}'
     container_name: config-server
     ports:
       - 8888:8888
     environment:
       CONFIG_SERVER_GIT_URI: https://github.com/pedro-chavezcastro/tds-configuration
       CONFIG_SERVER_GIT_BRANCH: main
-      CONFIG_SERVER_GIT_USERNAME: pedro-chavezcastro
-      CONFIG_SERVER_GIT_PASSWORD: Daniela_Aragon#0223
+      CONFIG_SERVER_GIT_USERNAME: /run/secrets/config_server_git_username_secret
+      CONFIG_SERVER_GIT_PASSWORD: /run/secrets/config_server_git_password_secret
+    secrets:
+       - config_server_git_username_secret
+       - config_server_git_password_secret
     restart: always
     networks:
       - def-tds-microservices-dev
-      - def-tds-microservices-uat
-      - def-tds-microservices-prod
   mysql8:
     image: 'mysql:8'
     container_name: mysql8
@@ -23,17 +24,18 @@ services:
     restart: always
     networks:
       - def-tds-microservices-dev
-      - def-tds-microservices-uat
-      - def-tds-microservices-prod
     environment:
-      MYSQL_ROOT_PASSWORD: zipkin
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/common_mysql_db_secret
+    secrets:
+       - common_mysql_db_secret
 networks:
   def-tds-microservices-dev:
     name: tds-microservices-dev
     external: true
-  def-tds-microservices-uat:
-    name: tds-microservices-uat
+secrets:
+  config_server_git_username_secret:
+    external: true    
+  config_server_git_password_secret:
     external: true
-  def-tds-microservices-prod:
-    name: tds-microservices-prod
+  common_mysql_db_secret:
     external: true
