@@ -38,12 +38,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      TDS_DB_CONFIG_URL: /run/secrets/database_url_secret
-      TDS_DB_CONFIG_NAME: /run/secrets/database_name_secret
-      TDS_DB_CONFIG_USERNAME: /run/secrets/database_username_secret
-      TDS_DB_CONFIG_PASSWORD: /run/secrets/database_password_secret
-      TDS_RABBIT_CONFIG_USERNAME: /run/secrets/rabbit_username_secret
-      TDS_RABBIT_CONFIG_PASSWORD: /run/secrets/rabbit_password_secret
     restart: always
     depends_on:
       - eureka-server
@@ -51,12 +45,12 @@ services:
     networks:
       - tds-microservices-dev
     secrets:
-       - database_url_secret
-       - database_name_secret
-       - database_username_secret
-       - database_password_secret
-       - rabbit_username_secret
-       - rabbit_password_secret
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password
   tds-microservice-suppliers:
     image: 'plchavez98/tds-microservice-suppliers:${MICRO_SUPPLIERS_VERSION}'
     environment:
@@ -69,6 +63,13 @@ services:
       - tds-microservice-products
     networks:
       - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
   tds-microservice-sales:
     image: 'plchavez98/tds-microservice-sales:${MICRO_SALES_VERSION}'
     environment:
@@ -104,10 +105,15 @@ services:
       - tds-microservice-zipkin-server
     networks:
       - tds-microservices-dev
+    deploy:
+      endpoint_mode: dnsrr
   oauth2-server:
     image: 'plchavez98/tds-microservice-oauth2-server:${OAUTH_SERVER_VERSION}'
     ports:
-      - 9100:9100
+      - target: 9100
+        published: 9100
+        protocol: tcp
+        mode: host
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -118,6 +124,8 @@ services:
       - eureka-server
       - tds-microservice-zipkin-server
       - tds-microservice-users
+    deploy:
+      endpoint_mode: dnsrr
   zuul-server:
     image: 'plchavez98/tds-microservice-zuul-server:${ZUUL_SERVER_VERSION}'
     ports:
@@ -136,21 +144,21 @@ services:
       - tds-microservice-sales
       - tds-microservice-orders
       - tds-microservice-users
-      - oauth2-server
+      - oauth2-server    
 networks:
   tds-microservices-dev:
     name: tds-microservices-dev
     external: true
 secrets:
-  database_url_secret:
+  db-url:
     external: true    
-  database_name_secret:
+  db-name:
     external: true
-  database_username_secret:
+  db-username:
     external: true
-  database_password_secret:
+  db-password:
     external: true
-  rabbit_username_secret:
+  rabbitmq-username:
     external: true
-  rabbit_password_secret:
+  rabbitmq-password:
     external: true    
