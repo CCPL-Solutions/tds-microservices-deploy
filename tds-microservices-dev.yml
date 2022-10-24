@@ -81,7 +81,14 @@ services:
       - tds-microservice-zipkin-server
       - tds-microservice-products
     networks:
-      - tds-microservices-dev      
+      - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
   tds-microservice-orders:
     image: 'plchavez98/tds-microservice-orders:${MICRO_ORDERS_VERSION}'
     environment:
@@ -94,6 +101,13 @@ services:
       - tds-microservice-products
     networks:
       - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
   tds-microservice-users:
     image: 'plchavez98/tds-microservice-users:${MICRO_USERS_VERSION}'
     environment:
@@ -107,6 +121,13 @@ services:
       - tds-microservices-dev
     deploy:
       endpoint_mode: dnsrr
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
   oauth2-server:
     image: 'plchavez98/tds-microservice-oauth2-server:${OAUTH_SERVER_VERSION}'
     ports:
