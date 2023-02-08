@@ -2,7 +2,6 @@ version: '3.8'
 services:
   config-server:
     image: 'plchavez98/tds-microservice-config-server:${CONFIG_SERVER_IMAGE_TAG}'
-    container_name: config-server
     ports:
       - 8888:8888
     environment:
@@ -13,15 +12,12 @@ services:
     secrets:
        - config_server_git_username_secret
        - config_server_git_password_secret
-    restart: always
     networks:
       - def-tds-microservices-dev
   mysql8:
     image: 'mysql:8'
-    container_name: mysql8
     ports:
       - 3306:3306
-    restart: always
     networks:
       - def-tds-microservices-dev
     environment:

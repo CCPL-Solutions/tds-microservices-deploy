@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  config-server:
+    image: 'plchavez98/tds-microservice-config-server:${CONFIG_SERVER_VERSION}'
+    container_name: config-server
+    ports:
+      - 8888:8888
+    environment:
+      CONFIG_SERVER_GIT_URI: https://github.com/pedro-chavezcastro/tds-configuration
+      CONFIG_SERVER_GIT_BRANCH: main
+      CONFIG_SERVER_GIT_USERNAME: pedro-chavezcastro
+      CONFIG_SERVER_GIT_PASSWORD: Daniela_Aragon#0223
+    restart: always
+    networks:
+      - tds-microservices-dev
+      - tds-microservices-uat
+      - tds-microservices-prod
+  mysql8:
+    image: 'mysql:8'
+    container_name: mysql8
+    ports:
+      - 3306:3306
+    restart: always
+    networks:
+      - tds-microservices-dev
+      - tds-microservices-uat
+      - tds-microservices-prod
+    environment:
+      MYSQL_ROOT_PASSWORD: zipkin
+networks:
+  tds-microservices-dev:
+    name: tds-microservices-dev
+    external: true
+  tds-microservices-uat:
+    name: tds-microservices-uat
+    external: true
+  tds-microservices-prod:
+    name: tds-microservices-prod
+    external: true

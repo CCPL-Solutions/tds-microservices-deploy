@@ -1,0 +1,185 @@
+version: '3.8'
+services:
+  eureka-server:
+    image: 'plchavez98/tds-microservice-eureka-server:${EUREKA_SERVER_VERSION}'
+    ports:
+      - 8761:8761
+    restart: always
+    networks:
+      - tds-microservices-dev
+  rabbitmq:
+    image: 'rabbitmq:3.8-management-alpine'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - tds-microservices-dev
+  tds-microservice-zipkin-server:
+    image: 'plchavez98/tds-microservice-zipkinserver:${ZIPKIN_SERVER_VERSION}'
+    ports:
+      - 9411:9411
+    restart: always
+    networks:
+      - tds-microservices-dev
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBIT_ADDRESSES: rabbitmq:5672
+      STORAGE_TYPE: mysql
+      MYSQL_DB: zipkin-dev
+      MYSQL_USER: zipkin-dev
+      MYSQL_PASS: zipkin-dev
+      MYSQL_HOST: mysql8      
+  tds-microservice-products:
+    image: 'plchavez98/tds-microservice-products:${MICRO_PRODUCTS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+    networks:
+      - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password
+  tds-microservice-suppliers:
+    image: 'plchavez98/tds-microservice-suppliers:${MICRO_SUPPLIERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: 'dev'
+      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
+  tds-microservice-sales:
+    image: 'plchavez98/tds-microservice-sales:${MICRO_SALES_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: 'dev'
+      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
+  tds-microservice-orders:
+    image: 'plchavez98/tds-microservice-orders:${MICRO_ORDERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+    networks:
+      - tds-microservices-dev
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
+  tds-microservice-users:
+    image: 'plchavez98/tds-microservice-users:${MICRO_USERS_VERSION}'
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    restart: always
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+    networks:
+      - tds-microservices-dev
+    deploy:
+      endpoint_mode: dnsrr
+    secrets:
+       - db-url
+       - db-name
+       - db-username
+       - db-password
+       - rabbitmq-username
+       - rabbitmq-password      
+  oauth2-server:
+    image: 'plchavez98/tds-microservice-oauth2-server:${OAUTH_SERVER_VERSION}'
+    ports:
+      - target: 9100
+        published: 9100
+        protocol: tcp
+        mode: host
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    networks:
+      - tds-microservices-dev
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-users
+    deploy:
+      endpoint_mode: dnsrr
+  zuul-server:
+    image: 'plchavez98/tds-microservice-zuul-server:${ZUUL_SERVER_VERSION}'
+    ports:
+      - 8090:8090
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    networks:
+      - tds-microservices-dev
+    depends_on:
+      - eureka-server
+      - tds-microservice-zipkin-server
+      - tds-microservice-products
+      - tds-microservice-suppliers
+      - tds-microservice-sales
+      - tds-microservice-orders
+      - tds-microservice-users
+      - oauth2-server    
+networks:
+  tds-microservices-dev:
+    name: tds-microservices-dev
+    external: true
+secrets:
+  db-url:
+    external: true    
+  db-name:
+    external: true
+  db-username:
+    external: true
+  db-password:
+    external: true
+  rabbitmq-username:
+    external: true
+  rabbitmq-password:
+    external: true

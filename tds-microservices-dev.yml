@@ -13,8 +13,8 @@ services:
       - 5672:5672
       - 15672:15672
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER_FILE: /run/secrets/rabbitmq_username
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_password
     networks:
       - tds-microservices-dev
   tds-microservice-zipkin-server:
@@ -50,127 +50,16 @@ services:
        - db-username
        - db-password
        - rabbitmq-username
-       - rabbitmq-password
-  tds-microservice-suppliers:
-    image: 'plchavez98/tds-microservice-suppliers:${MICRO_SUPPLIERS_VERSION}'
-    environment:
-      SPRING_PROFILES_ACTIVE: 'dev'
-      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
-    restart: always
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-      - tds-microservice-products
-    networks:
-      - tds-microservices-dev
-    secrets:
-       - db-url
-       - db-name
-       - db-username
-       - db-password
-       - rabbitmq-username
-       - rabbitmq-password      
-  tds-microservice-sales:
-    image: 'plchavez98/tds-microservice-sales:${MICRO_SALES_VERSION}'
-    environment:
-      SPRING_PROFILES_ACTIVE: 'dev'
-      SPRING_CLOUD_CONFIG_URI: 'http://config-server:8888'
-    restart: always
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-      - tds-microservice-products
-    networks:
-      - tds-microservices-dev
-    secrets:
-       - db-url
-       - db-name
-       - db-username
-       - db-password
-       - rabbitmq-username
-       - rabbitmq-password      
-  tds-microservice-orders:
-    image: 'plchavez98/tds-microservice-orders:${MICRO_ORDERS_VERSION}'
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    restart: always
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-      - tds-microservice-products
-    networks:
-      - tds-microservices-dev
-    secrets:
-       - db-url
-       - db-name
-       - db-username
-       - db-password
-       - rabbitmq-username
-       - rabbitmq-password      
-  tds-microservice-users:
-    image: 'plchavez98/tds-microservice-users:${MICRO_USERS_VERSION}'
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    restart: always
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-    networks:
-      - tds-microservices-dev
-    deploy:
-      endpoint_mode: dnsrr
-    secrets:
-       - db-url
-       - db-name
-       - db-username
-       - db-password
-       - rabbitmq-username
-       - rabbitmq-password      
-  oauth2-server:
-    image: 'plchavez98/tds-microservice-oauth2-server:${OAUTH_SERVER_VERSION}'
-    ports:
-      - target: 9100
-        published: 9100
-        protocol: tcp
-        mode: host
-    restart: always
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    networks:
-      - tds-microservices-dev
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-      - tds-microservice-users
-    deploy:
-      endpoint_mode: dnsrr
-  zuul-server:
-    image: 'plchavez98/tds-microservice-zuul-server:${ZUUL_SERVER_VERSION}'
-    ports:
-      - 8090:8090
-    restart: always
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-    networks:
-      - tds-microservices-dev
-    depends_on:
-      - eureka-server
-      - tds-microservice-zipkin-server
-      - tds-microservice-products
-      - tds-microservice-suppliers
-      - tds-microservice-sales
-      - tds-microservice-orders
-      - tds-microservice-users
-      - oauth2-server    
+       - rabbitmq-password 
 networks:
   tds-microservices-dev:
     name: tds-microservices-dev
     external: true
 secrets:
+  rabbitmq_username:
+    external: true
+  rabbitmq_password:
+    external: true    
   db-url:
     external: true    
   db-name:
@@ -182,4 +71,4 @@ secrets:
   rabbitmq-username:
     external: true
   rabbitmq-password:
-    external: true    
+    external: true
